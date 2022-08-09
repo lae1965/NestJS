@@ -1,43 +1,57 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { News } from './news.interface';
-import { Response } from 'express';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateNewsDto } from './dto/create-news.dto';
+import { UpdateNewsDto } from './dto/update-news.dto';
+import { News } from './entities/news.entity';
 
 @Injectable()
 export class NewsService {
-  private readonly news: News[] = [];
+  private news: News[] = [];
 
-  create(news: News): number {
-    if (!news.createdAt) news.createdAt = new Date();
-    if (!news.author) news.author = 'Andrey Lashkevich';
-    news.id = this.news.length + 1; //Временно!!!!!!!!!!!
-    return this.news.push(news);
+  private getOneNewsById(id: number): News {
+    return this.news.find((oneNews) => oneNews.id === id);
+  }
+
+  create(createNewsDto: CreateNewsDto): number {
+    const newNews: News = {
+      ...createNewsDto,
+      id: this.news.length + 1,
+      author: 'Andrey Lashkevich',
+      date: new Date(),
+    };
+
+    while (this.getOneNewsById(newNews.id)) newNews.id++;
+    return this.news.push(newNews);
   }
 
   findAll(): News[] {
     return this.news;
   }
 
-  findByIndex(index: number): News | null {
-    console.assert(
-      typeof this.news[index] !== 'undefined',
-      '[findByIndex] invalid',
-    );
-    if (typeof this.news[index] === 'undefined') return null;
-    return this.news[index];
+  findOne(id: number): News | NotFoundException {
+    const findOneNews = this.getOneNewsById(id);
+    if (!findOneNews) {
+      throw new NotFoundException();
+    }
+    return findOneNews;
   }
 
-  editNews(res: Response, id: number, news: News): Response {
-    const find = this.news.find((el) => el.id === id);
-    if (!find) {
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .end(`Запись с id = ${id} не найдена`);
+  update(id: number, updateNewsDto: UpdateNewsDto): News | NotFoundException {
+    const findOneNews = this.getOneNewsById(id);
+    if (!findOneNews) {
+      throw new NotFoundException();
     }
-    for (const key in find) {
-      if (!!news[key]) find[key] = news[key];
+
+    for (const key in updateNewsDto) {
+      if (!!updateNewsDto[key]) findOneNews[key] = updateNewsDto[key];
     }
-    return res
-      .status(HttpStatus.OK)
-      .end(`Запись с id = ${id} успешно изменена`);
+    return findOneNews;
+  }
+
+  remove(id: number): boolean {
+    const findNewsNumber = this.news.findIndex((oneNews) => oneNews.id === id);
+    if (findNewsNumber === -1) return false;
+
+    this.news.splice(findNewsNumber, 1);
+    return true;
   }
 }
