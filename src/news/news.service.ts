@@ -7,7 +7,7 @@ import { News } from './entities/news.entity';
 export class NewsService {
   private news: News[] = [];
 
-  private getOneNewsById(id: number): News {
+  getOneNewsById(id: number): News {
     return this.news.find((oneNews) => oneNews.id === id);
   }
 
@@ -16,6 +16,7 @@ export class NewsService {
       ...createNewsDto,
       id: this.news.length + 1,
       author: 'Andrey Lashkevich',
+      comments: [],
       date: new Date(),
     };
 
