@@ -1,4 +1,4 @@
-import { Comment } from "src/comment/entities/comment.entity";
+import { Comment } from 'src/comment/entities/comment.entity';
 
 export class News {
   id: number;
@@ -6,5 +6,6 @@ export class News {
   text: string;
   author: string;
   comments: Comment[];
+  thumbnail: string;
   date: Date;
 }

@@ -7,12 +7,18 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { CreateNewsDto } from './dto/create-news.dto';
 import { UpdateNewsDto } from './dto/update-news.dto';
 import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AccessGuard } from 'src/guards/access/access.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { v4 } from 'uuid';
+import { extname } from 'path';
 
 const role = 'admin';
 // const role = 'not_admin';
@@ -24,7 +30,21 @@ export class NewsController {
   @Post()
   @AdminOnly(role)
   @UseGuards(AccessGuard)
-  create(@Body() createNewsDto: CreateNewsDto) {
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './public/thumbnails',
+        filename: (req, file, cb) => {
+          cb(null, `${v4()}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() createNewsDto: CreateNewsDto,
+  ) {
+    createNewsDto.thumbnail = `thumbnails/${file.filename}`;
     return this.newsService.create(createNewsDto);
   }
 
