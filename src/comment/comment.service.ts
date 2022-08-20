@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { News } from 'src/news/entities/news.entity';
 import { NewsService } from 'src/news/news.service';
+import { AddFileCommentDto } from './dto/add-file-comment.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment } from './entities/comment.entity';
@@ -8,7 +9,7 @@ import { NewsAndComment } from './news-and-comment.interface';
 
 @Injectable()
 export class CommentService {
-  constructor(private newsService: NewsService) {}
+  constructor(private newsService: NewsService) { }
 
   getNewsAndComment(newsId: number, commentId: number): NewsAndComment {
     let news: News = this.newsService.getOneNewsById(newsId);
@@ -26,7 +27,8 @@ export class CommentService {
   }
 
   create(createCommentDto: CreateCommentDto) {
-    const news: News = this.newsService.getOneNewsById(createCommentDto.newsId);
+    console.log(createCommentDto.newsId);
+    const news: News = this.newsService.getOneNewsById(+createCommentDto.newsId);
     if (!news) {
       throw new NotFoundException();
     }
@@ -36,6 +38,7 @@ export class CommentService {
       text: createCommentDto.text,
       author: 'Andrey Lashkevich',
       answers: [],
+      attachments: [],
       date: new Date(),
     };
     while (!!this.getOneCommentById(news, newComment.id)) newComment.id++;
@@ -63,7 +66,7 @@ export class CommentService {
 
   update(commentId: number, updateCommentDto: UpdateCommentDto) {
     const { news, comment } = this.getNewsAndComment(
-      updateCommentDto.newsId,
+      +updateCommentDto.newsId,
       commentId,
     );
 
@@ -72,6 +75,17 @@ export class CommentService {
     }
 
     if (!!updateCommentDto.text) comment.text = updateCommentDto.text;
+    return comment;
+  }
+
+  addFile(commentId: number, addFileCommentDto: AddFileCommentDto) {
+    const { news, comment } = this.getNewsAndComment(+addFileCommentDto.newsId, commentId);
+
+    if (!news || !comment) {
+      throw new NotFoundException();
+    }
+
+    comment.attachments.push(addFileCommentDto.fileName);
     return comment;
   }
 

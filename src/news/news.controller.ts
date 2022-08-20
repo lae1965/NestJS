@@ -9,6 +9,8 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  ParseFilePipe,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { CreateNewsDto } from './dto/create-news.dto';
@@ -25,7 +27,7 @@ const role = 'admin';
 
 @Controller('news')
 export class NewsController {
-  constructor(private readonly newsService: NewsService) {}
+  constructor(private readonly newsService: NewsService) { }
 
   @Post()
   @AdminOnly(role)
@@ -41,7 +43,12 @@ export class NewsController {
     }),
   )
   create(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new FileTypeValidator({ fileType: /p?jpeg|gif|png|svg|tiff|webp/ })],
+      })
+    )
+    file: Express.Multer.File,
     @Body() createNewsDto: CreateNewsDto,
   ) {
     createNewsDto.thumbnail = `thumbnails/${file.filename}`;
@@ -61,6 +68,21 @@ export class NewsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateNewsDto: UpdateNewsDto) {
     return this.newsService.update(+id, updateNewsDto);
+  }
+
+  @Patch('file/:id')
+  @UseInterceptors(
+    FileInterceptor('newFile', {
+      storage: diskStorage({
+        destination: './public/files',
+        filename: (req, newFile, cb) => {
+          cb(null, `${v4()}${extname(newFile.originalname)}`);
+        },
+      }),
+    }),
+  )
+  addFile(@Param('id') id: string, @UploadedFile() newFile: Express.Multer.File) {
+    return this.newsService.addFile(+id, `files/${newFile.filename}`);
   }
 
   @Delete(':id')

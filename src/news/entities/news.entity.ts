@@ -6,6 +6,7 @@ export class News {
   text: string;
   author: string;
   comments: Comment[];
+  attachments: string[];
   thumbnail: string;
   date: Date;
 }
