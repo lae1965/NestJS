@@ -11,6 +11,7 @@ import {
   UploadedFile,
   ParseFilePipe,
   FileTypeValidator,
+  Render,
 } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { CreateNewsDto } from './dto/create-news.dto';
@@ -27,7 +28,7 @@ const role = 'admin';
 
 @Controller('news')
 export class NewsController {
-  constructor(private readonly newsService: NewsService) { }
+  constructor(private readonly newsService: NewsService) {}
 
   @Post()
   @AdminOnly(role)
@@ -45,8 +46,10 @@ export class NewsController {
   create(
     @UploadedFile(
       new ParseFilePipe({
-        validators: [new FileTypeValidator({ fileType: /p?jpeg|gif|png|svg|tiff|webp/ })],
-      })
+        validators: [
+          new FileTypeValidator({ fileType: /p?jpeg|gif|png|svg|tiff|webp/ }),
+        ],
+      }),
     )
     file: Express.Multer.File,
     @Body() createNewsDto: CreateNewsDto,
@@ -56,8 +59,9 @@ export class NewsController {
   }
 
   @Get()
+  @Render('news-list')
   findAll() {
-    return this.newsService.findAll();
+    return { news: this.newsService.findAll() };
   }
 
   @Get(':id')
@@ -81,7 +85,10 @@ export class NewsController {
       }),
     }),
   )
-  addFile(@Param('id') id: string, @UploadedFile() newFile: Express.Multer.File) {
+  addFile(
+    @Param('id') id: string,
+    @UploadedFile() newFile: Express.Multer.File,
+  ) {
     return this.newsService.addFile(+id, `files/${newFile.filename}`);
   }
 
