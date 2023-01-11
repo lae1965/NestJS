@@ -5,5 +5,6 @@ export class Comment {
   text: string;
   author: string;
   answers: Answer[];
+  attachments: string[];
   date: Date;
 }

@@ -17,6 +17,7 @@ export class NewsService {
       id: this.news.length + 1,
       author: 'Andrey Lashkevich',
       comments: [],
+      attachments: [],
       date: new Date(),
     };
 
@@ -45,6 +46,15 @@ export class NewsService {
     for (const key in updateNewsDto) {
       if (!!updateNewsDto[key]) findOneNews[key] = updateNewsDto[key];
     }
+    return findOneNews;
+  }
+
+  addFile(id: number, fileName: string): News | NotFoundException {
+    const findOneNews = this.getOneNewsById(id);
+    if (!findOneNews) {
+      throw new NotFoundException();
+    }
+    findOneNews.attachments.push(fileName);
     return findOneNews;
   }
 
